@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高中生物复习思维导图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .mindmap-container {
+            width: 100%;
+            max-width: 1200px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .center-node {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .center-circle {
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 1.8em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .center-circle:hover {
+            transform: scale(1.05);
+        }
+
+        .branches-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .branch {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+        }
+
+        .branch:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .branch.cell { border-color: #ff6b6b; }
+        .branch.genetics { border-color: #4ecdc4; }
+        .branch.ecology { border-color: #45b7d1; }
+        .branch.evolution { border-color: #96ceb4; }
+        .branch.physiology { border-color: #ffeaa7; }
+        .branch.molecular { border-color: #dda0dd; }
+
+        .branch-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        .branch-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .branch-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            color: white;
+            transition: transform 0.3s ease;
+        }
+
+        .expand-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2em;
+        }
+
+        .expand-btn:hover {
+            background: #2980b9;
+            transform: rotate(180deg);
+        }
+
+        .branch-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .branch-content.expanded {
+            max-height: 500px;
+        }
+
+        .subtopic {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 8px 0;
+            border-left: 4px solid #3498db;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .subtopic:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .subtopic-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .subtopic-detail {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .subtopic.expanded .subtopic-detail {
+            max-height: 200px;
+            margin-top: 8px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4ecdc4, #44a08d);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 4px;
+        }
+
+        .stats {
+            text-align: center;
+            margin-top: 20px;
+            color: #7f8c8d;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .center-circle {
+                width: 150px;
+                height: 150px;
+                font-size: 1.4em;
+            }
+            
+            .branches-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .mindmap-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧬 高中生物复习思维导图</h1>
+        <p>点击各个分支展开详细内容，系统性复习生物知识</p>
+    </div>
+
+    <div class="mindmap-container">
+        <div class="center-node">
+            <div class="center-circle" onclick="toggleAllBranches()">
+                高中生物学
+            </div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="branches-container">
+            <!-- 细胞生物学 -->
+            <div class="branch cell">
+                <div class="branch-header" onclick="toggleBranch('cell')">
+                    <div>
+                        <div class="branch-icon" style="background: #ff6b6b;">🔬</div>
+                        <div class="branch-title">细胞生物学</div>
+                    </div>
+                    <button class="expand-btn" id="cell-btn">+</button>
+                </div>
+                <div class="branch-content" id="cell-content">
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">细胞的分子组成</div>
+                        <div class="subtopic-detail">
+                            蛋白质、糖类、脂质、核酸的结构与功能；水和无机盐的作用；ATP的结构和功能
+                        </div>
+                    </div>
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">细胞的基本结构</div>
+                        <div class="subtopic-detail">
+                            细胞膜系统、细胞器的结构与功能；原核细胞与真核细胞的区别
+                        </div>
+                    </div>
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">细胞的物质运输</div>
+                        <div class="subtopic-detail">
+                            自由扩散、载体蛋白、胞吞胞吐；物质跨膜运输的方式和特点
+                        </div>
+                    </div>
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">细胞分裂</div>
+                        <div class="subtopic-detail">
+                            有丝分裂、减数分裂的过程和意义；细胞周期的调控
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 分子生物学 -->
+            <div class="branch molecular">
+                <div class="branch-header" onclick="toggleBranch('molecular')">
+                    <div>
+                        <div class="branch-icon" style="background: #dda0dd;">🧬</div>
+                        <div class="branch-title">分子生物学</div>
+                    </div>
+                    <button class="expand-btn" id="molecular-btn">+</button>
+                </div>
+                <div class="branch-content" id="molecular-content">
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">DNA结构与复制</div>
+                        <div class="subtopic-detail">
+                            DNA双分子结构；半保留复制过程；DNA聚合酶的作用
+                        </div>
+                    </div>
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">基因的表达</div>
+                        <div class="subtopic-detail">
+                            转录过程；mRNA的加工；翻译过程；密码子与反密码子
+                        </div>
+                    </div>
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">基因工程</div>
+                        <div class="subtopic-detail">
+                            限制酶、DNA连接酶；载体；PCR技术；基因工程的应用
+                        </div>
+                    </div>
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">基因调控</div>
+                        <div class="subtopic-detail">
+                            操纵子模型；真核生物基因调控；表观遗传学
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 遗传学 -->
+            <div class="branch genetics">
+                <div class="branch-header" onclick="toggleBranch('genetics')">
+                    <div>
+                        <div class="branch-icon" style="background: #4ecdc4;">🧩</div>
+                        <div class="branch-title">遗传学</div>
+                    </div>
+                    <button class="expand-btn" id="genetics-btn">+</button>
+                </div>
+                <div class="branch-content" id="genetics-content">
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">孟德尔遗传定律</div>
+                        <div class="subtopic-detail">
+                            分离定律、自由组合定律；显性与隐性；基因型与表现型
+                        </div>
+                    </div>
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">伴性遗传</div>
+                        <div class="subtopic-detail">
+                            X连锁遗传、Y连锁遗传；色盲、血友病等遗传病分析
+                        </div>
+                    </div>
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">基因突变与基因重组</div>
+                        <div class="subtopic-detail">
+                            点突变、染色体畸变；基因重组的类型和意义
+                        </div>
+                    </div>
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">人类遗传病</div>
+                        <div class="subtopic-detail">
+                            单基因遗传病、多基因遗传病；遗传咨询与产前诊断
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 生理学 -->
+            <div class="branch physiology">
+                <div class="branch-header" onclick="toggleBranch('physiology')">
+                    <div>
+                        <div class="branch-icon" style="background: #ffeaa7;">❤️</div>
+                        <div class="branch-title">生理学</div>
+                    </div>
+                    <button class="expand-btn" id="physiology-btn">+</button>
+                </div>
+                <div class="branch-content" id="physiology-content">
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">呼吸作用</div>
+                        <div class="subtopic-detail">
+                            有氧呼吸、无氧呼吸的过程；ATP的生成；呼吸商的概念
+                        </div>
+                    </div>
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">光合作用</div>
+                        <div class="subtopic-detail">
+                            光反应、暗反应过程；叶绿体的结构；光合作用的意义
+                        </div>
+                    </div>
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">神经调节</div>
+                        <div class="subtopic-detail">
+                            神经元结构；神经冲动的产生和传导；反射弧的组成
+                        </div>
+                    </div>
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">体液调节</div>
+                        <div class="subtopic-detail">
+                            激素的种类和作用；血糖调节；甲状腺激素调节
+                        </div>
+                    </div>
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">免疫调节</div>
+                        <div class="subtopic-detail">
+                            免疫系统的组成；特异性免疫与非特异性免疫；免疫反应
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 生态学 -->
+            <div class="branch ecology">
+                <div class="branch-header" onclick="toggleBranch('ecology')">
+                    <div>
+                        <div class="branch-icon" style="background: #45b7d1;">🌱</div>
+                        <div class="branch-title">生态学</div>
+                    </div>
+                    <button class="expand-btn" id="ecology-btn">+</button>
+                </div>
+                <div class="branch-content" id="ecology-content">
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">种群生态学</div>
+                        <div class="subtopic-detail">
+                            种群密度、种群增长模型；J型增长和S型增长
+                        </div>
+                    </div>
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">群落生态学</div>
+                        <div class="subtopic-detail">
+                            群落的结构；群落演替；物种多样性指数
+                        </div>
+                    </div>
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">生态系统</div>
+                        <div class="subtopic-detail">
+                            生态系统的组成和结构；能量流动；物质循环
+                        </div>
+                    </div>
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">生物多样性</div>
+                        <div class="subtopic-detail">
+                            遗传多样性、物种多样性、生态系统多样性；保护策略
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 进化生物学 -->
+            <div class="branch evolution">
+                <div class="branch-header" onclick="toggleBranch('evolution')">
+                    <div>
+                        <div class="branch-icon" style="background: #96ceb4;">🦕</div>
+                        <div class="branch-title">进化生物学</div>
+                    </div>
+                    <button class="expand-btn" id="evolution-btn">+</button>
+                </div>
+                <div class="branch-content" id="evolution-content">
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">达尔文进化论</div>
+                        <div class="subtopic-detail">
+                            自然选择学说；适者生存；进化的证据
+                        </div>
+                    </div>
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">现代生物进化理论</div>
+                        <div class="subtopic-detail">
+                            基因频率；哈迪-温伯格定律；进化的机制
+                        </div>
+                    </div>
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">物种形成</div>
+                        <div class="subtopic-detail">
+                            生殖隔离；地理隔离；物种概念
+                        </div>
+                    </div>
+                    <div class="subtopic" onclick="toggleSubtopic(this)">
+                        <div class="subtopic-title">生命起源</div>
+                        <div class="subtopic-detail">
+                            化学进化；生物进化的历程；系统发育
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <p>已展开: <span id="expandedCount">0</span>/6 个主要分支</p>
+            <p>学习进度: <span id="progressPercent">0</span>%</p>
+        </div>
+    </div>
+
+    <script>
+        let expandedBranches = new Set();
+        let expandedSubtopics = new Set();
+
+        function toggleBranch(branchId) {
+            const content = document.getElementById(branchId + '-content');
+            const btn = document.getElementById(branchId + '-btn');
+            
+            if (expandedBranches.has(branchId)) {
+                content.classList.remove('expanded');
+                btn.textContent = '+';
+                btn.style.transform = 'rotate(0deg)';
+                expandedBranches.delete(branchId);
+            } else {
+                content.classList.add('expanded');
+                btn.textContent = '−';
+                btn.style.transform = 'rotate(180deg)';
+                expandedBranches.add(branchId);
+            }
+            
+            updateProgress();
+        }
+
+        function toggleSubtopic(element) {
+            const subtopicId = element.querySelector('.subtopic-title').textContent;
+            
+            if (expandedSubtopics.has(subtopicId)) {
+                element.classList.remove('expanded');
+                expandedSubtopics.delete(subtopicId);
+            } else {
+                element.classList.add('expanded');
+                expandedSubtopics.add(subtopicId);
+            }
+            
+            updateProgress();
+        }
+
+        function toggleAllBranches() {
+            const branches = ['cell', 'molecular', 'genetics', 'physiology', 'ecology', 'evolution'];
+            const allExpanded = expandedBranches.size === branches.length;
+            
+            branches.forEach(branchId => {
+                const content = document.getElementById(branchId + '-content');
+                const btn = document.getElementById(branchId + '-btn');
+                
+                if (allExpanded) {
+                    content.classList.remove('expanded');
+                    btn.textContent = '+';
+                    btn.style.transform = 'rotate(0deg)';
+                    expandedBranches.delete(branchId);
+                } else {
+                    content.classList.add('expanded');
+                    btn.textContent = '−';
+                    btn.style.transform = 'rotate(180deg)';
+                    expandedBranches.add(branchId);
+                }
+            });
+            
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const totalBranches = 6;
+            const expandedCount = expandedBranches.size;
+            const progressPercent = Math.round((expandedCount / totalBranches) * 100);
+            
+            document.getElementById('expandedCount').textContent = expandedCount;
+            document.getElementById('progressPercent').textContent = progressPercent;
+            document.getElementById('progressFill').style.width = progressPercent + '%';
+        }
+
+        // 添加键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                // ESC键收起所有分支
+                expandedBranches.clear();
+                expandedSubtopics.clear();
+                const branches = ['cell', 'molecular', 'genetics', 'physiology', 'ecology', 'evolution'];
+                branches.forEach(branchId => {
+                    const content = document.getElementById(branchId + '-content');
+                    const btn = document.getElementById(branchId + '-btn');
+                    content.classList.remove('expanded');
+                    btn.textContent = '+';
+                    btn.style.transform = 'rotate(0deg)';
+                });
+                document.querySelectorAll('.subtopic').forEach(subtopic => {
+                    subtopic.classList.remove('expanded');
+                });
+                updateProgress();
+            }
+        });
+
+        // 初始化
+        updateProgress();
+    </script>
+</body>
+</html>
