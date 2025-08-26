@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>你画我猜 - 生物版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', '微软雅黑', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .game-title {
+            color: #4a5568;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .word-display {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
+            font-size: 3em;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            font-weight: bold;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 20px rgba(238, 90, 82, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .word-display:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(238, 90, 82, 0.4);
+        }
+
+        .timer {
+            font-size: 1.5em;
+            color: #666;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .timer.warning {
+            color: #ff6b6b;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #43e97b, #38f9d7);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, #fa709a, #fee140);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
+        }
+
+        .stats {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            align-items: center;
+        }
+
+        @media (min-width: 600px) {
+            .stats {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 15px;
+            }
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4a5568;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .game-over {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #ff6b6b;
+            animation: confetti-fall 3s linear infinite;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1 class="game-title">🧬 你画我猜-生物版 🔬</h1>
+        
+        <div id="gameArea">
+            <div class="word-display" id="wordDisplay">
+                生物知识大全
+            </div>
+            
+            <div class="timer" id="timer">准备开始</div>
+            
+            <div class="buttons">
+                <button class="btn btn-primary" id="startBtn" onclick="startGame()">开始游戏</button>
+                <button class="btn btn-secondary hidden" id="correctBtn" onclick="correctAnswer()">✅ 正确</button>
+                <button class="btn btn-warning hidden" id="skipBtn" onclick="skipQuestion()">⏭️ 跳过</button>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="currentRound">0</div>
+                <div class="stat-label">已完成题目</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="correctCount">0</div>
+                <div class="stat-label">正确题目</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalWords">95</div>
+                <div class="stat-label">题库总数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="timeLeft">5:00</div>
+                <div class="stat-label">剩余时间</div>
+            </div>
+        </div>
+
+        <div id="gameOver" class="game-over hidden">
+            <h2>🎉 游戏结束！</h2>
+            <p>你已经完成了所有题目！</p>
+            <button class="btn btn-primary" onclick="resetGame()" style="margin-top: 15px;">重新开始</button>
+        </div>
+    </div>
+
+    <script>
+        // 生物综合词汇库 (95个词汇)
+        const wordBank = [
+            // 生物组织层次 (5个)
+            '细胞（两字 生物组织层次）',
+            '组织（两字 生物组织层次）',
+            '器官（两字 生物组织层次）',
+            '系统（两字 生物组织层次）',
+            '生物体（三字 生物组织层次）',
+
+            // 微生物 (3个)
+            '病毒（两字 微生物）',
+            '细菌（两字 微生物）',
+            '真菌（两字 微生物）',
+
+            // 细胞结构 (8个)
+            '细胞膜（三字 细胞结构）',
+            '细胞质（三字 细胞结构）',
+            '细胞核（三字 细胞结构）',
+            '细胞壁（三字 细胞结构）',
+            '叶绿体（三字 细胞结构）',
+            '线粒体（三字 细胞结构）',
+            '液泡（两字 细胞结构）',
+            '染色体（三字 细胞结构）',
+
+            // 生物分子 (5个)
+            'DNA（三字母 生物分子）',
+            '基因（两字 生物分子）',
+            '蛋白质（三字 生物分子）',
+            '糖类（两字 生物分子）',
+            '脂肪（两字 生物分子）',
+
+            // 生理过程 (3个)
+            '光合作用（四字 生理过程）',
+            '呼吸作用（四字 生理过程）',
+            '蒸腾作用（四字 生理过程）',
+
+            // 植物解剖结构 (25个)
+            '种子（两字 植物解剖）',
+            '胚（一字 植物解剖）',
+            '胚乳（两字 植物解剖）',
+            '根尖（两字 植物解剖）',
+            '分生区（三字 植物解剖）',
+            '伸长区（三字 植物解剖）',
+            '成熟区（三字 植物解剖）',
+            '导管（两字 植物解剖）',
+            '筛管（两字 植物解剖）',
+            '叶片（两字 植物解剖）',
+            '叶肉（两字 植物解剖）',
+            '叶脉（两字 植物解剖）',
+            '气孔（两字 植物解剖）',
+            '花（一字 植物解剖）',
+            '雄蕊（两字 植物解剖）',
+            '雌蕊（两字 植物解剖）',
+            '花药（两字 植物解剖）',
+            '花丝（两字 植物解剖）',
+            '柱头（两字 植物解剖）',
+            '花柱（两字 植物解剖）',
+            '子房（两字 植物解剖）',
+            '胚珠（两字 植物解剖）',
+            '果实（两字 植物解剖）',
+            '果皮（两字 植物解剖）',
+
+            // 动物分类 (11个)
+            '昆虫（两字 动物分类）',
+            '节肢动物（四字 动物分类）',
+            '鱼类（两字 动物分类）',
+            '两栖类（三字 动物分类）',
+            '爬行类（三字 动物分类）',
+            '鸟类（两字 动物分类）',
+            '哺乳类（三字 动物分类）',
+            '脊柱（两字 动物解剖）',
+            '脊椎动物（四字 动物分类）',
+            '无脊椎动物（五字 动物分类）',
+
+            // 人体系统与器官 (25个)
+            '消化系统（四字 人体系统）',
+            '消化道（三字 人体器官）',
+            '消化腺（三字 人体器官）',
+            '口腔（两字 人体器官）',
+            '胃（一字 人体器官）',
+            '小肠（两字 人体器官）',
+            '大肠（两字 人体器官）',
+            '肝脏（两字 人体器官）',
+            '胰腺（两字 人体器官）',
+            '呼吸系统（四字 人体系统）',
+            '呼吸道（三字 人体器官）',
+            '肺（一字 人体器官）',
+            '循环系统（四字 人体系统）',
+            '心脏（两字 人体器官）',
+            '血管（两字 人体器官）',
+            '动脉（两字 人体器官）',
+            '静脉（两字 人体器官）',
+            '毛细血管（四字 人体器官）',
+            '血液（两字 人体组织）',
+            '红细胞（三字 人体细胞）',
+            '白细胞（三字 人体细胞）',
+            '血小板（三字 人体细胞）',
+            '泌尿系统（四字 人体系统）',
+            '肾脏（两字 人体器官）',
+            '输尿管（三字 人体器官）',
+            '膀胱（两字 人体器官）',
+            '尿道（两字 人体器官）',
+
+            // 神经与内分泌 (8个)
+            '神经系统（四字 人体系统）',
+            '脑（一字 人体器官）',
+            '脊髓（两字 人体器官）',
+            '神经（两字 人体组织）',
+            '反射（两字 生理过程）',
+            '反射弧（三字 生理结构）',
+            '激素（两字 生理分子）',
+            '内分泌腺（四字 人体器官）',
+
+            // 生殖与发育 (3个)
+            '生殖系统（四字 人体系统）',
+            '受精（两字 生理过程）',
+            '胚胎（两字 发育阶段）',
+
+            // 遗传与进化 (3个)
+            '遗传（两字 生物现象）',
+            '变异（两字 生物现象）',
+            '相对性状（四字 遗传概念）',
+
+            // 生态学 (1个)
+            '生态系统（四字 生态概念）'
+        ];
+
+        // 游戏状态
+        let gameState = {
+            currentWordIndex: 0,
+            usedWords: [],
+            correctCount: 0,
+            isGameActive: false,
+            totalTimeRemaining: 300, // 5分钟 = 300秒
+            currentWord: '',
+            timer: null
+        };
+
+        // DOM元素
+        const elements = {
+            wordDisplay: document.getElementById('wordDisplay'),
+            timer: document.getElementById('timer'),
+            startBtn: document.getElementById('startBtn'),
+            correctBtn: document.getElementById('correctBtn'),
+            skipBtn: document.getElementById('skipBtn'),
+            currentRound: document.getElementById('currentRound'),
+            totalWords: document.getElementById('totalWords'),
+            timeLeft: document.getElementById('timeLeft'),
+            correctCount: document.getElementById('correctCount'),
+            gameOver: document.getElementById('gameOver'),
+            gameArea: document.getElementById('gameArea')
+        };
+
+        // 初始化游戏
+        function initGame() {
+            elements.totalWords.textContent = wordBank.length;
+            elements.timeLeft.textContent = gameState.totalTimeRemaining;
+            elements.correctCount.textContent = gameState.correctCount;
+            shuffleArray(wordBank);
+        }
+
+        // 打乱数组顺序
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // 开始游戏
+        function startGame() {
+            gameState.isGameActive = true;
+            gameState.currentWordIndex = 0;
+            gameState.usedWords = [];
+            gameState.correctCount = 0;
+            gameState.totalTimeRemaining = 300;
+            
+            // 显示/隐藏按钮
+            elements.startBtn.classList.add('hidden');
+            elements.correctBtn.classList.remove('hidden');
+            elements.skipBtn.classList.remove('hidden');
+            elements.gameOver.classList.add('hidden');
+            elements.gameArea.classList.remove('hidden');
+            
+            // 开始第一题
+            nextWord();
+            
+            // 开始总计时
+            startTimer();
+        }
+
+        // 下一题
+        function nextWord() {
+            if (gameState.currentWordIndex >= wordBank.length) {
+                // 题库用完了，重新打乱继续
+                shuffleArray(wordBank);
+                gameState.currentWordIndex = 0;
+            }
+
+            // 获取下一个词
+            gameState.currentWord = wordBank[gameState.currentWordIndex];
+            gameState.usedWords.push(gameState.currentWord);
+            
+            // 更新显示
+            elements.wordDisplay.textContent = gameState.currentWord;
+            elements.currentRound.textContent = gameState.usedWords.length;
+            
+            gameState.currentWordIndex++;
+        }
+
+        // 正确答案
+        function correctAnswer() {
+            if (!gameState.isGameActive) return;
+            
+            gameState.correctCount++;
+            elements.correctCount.textContent = gameState.correctCount;
+            nextWord();
+        }
+
+        // 跳过题目
+        function skipQuestion() {
+            if (!gameState.isGameActive) return;
+            nextWord();
+        }
+
+        // 开始计时器
+        function startTimer() {
+            updateTimerDisplay();
+            
+            gameState.timer = setInterval(() => {
+                gameState.totalTimeRemaining--;
+                updateTimerDisplay();
+                
+                if (gameState.totalTimeRemaining <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        // 更新计时器显示
+        function updateTimerDisplay() {
+            const minutes = Math.floor(gameState.totalTimeRemaining / 60);
+            const seconds = gameState.totalTimeRemaining % 60;
+            const timeText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            elements.timer.textContent = `⏰ 剩余时间: ${timeText}`;
+            elements.timeLeft.textContent = timeText;
+            
+            // 时间不足时闪烁提醒
+            if (gameState.totalTimeRemaining <= 60) {
+                elements.timer.classList.add('warning');
+            } else {
+                elements.timer.classList.remove('warning');
+            }
+        }
+
+        // 结束游戏
+        function endGame() {
+            gameState.isGameActive = false;
+            clearInterval(gameState.timer);
+            
+            // 显示游戏结束界面
+            elements.gameArea.classList.add('hidden');
+            elements.gameOver.classList.remove('hidden');
+            
+            // 更新结果显示
+            const resultText = `🎉 游戏结束！<br>共完成 ${gameState.usedWords.length} 题<br>正确 ${gameState.correctCount} 题<br>正确率: ${gameState.usedWords.length > 0 ? Math.round((gameState.correctCount / gameState.usedWords.length) * 100) : 0}%`;
+            document.querySelector('#gameOver h2').innerHTML = resultText;
+            
+            // 播放庆祝动画
+            createConfetti();
+        }
+
+        // 重置游戏
+        function resetGame() {
+            gameState = {
+                currentWordIndex: 0,
+                usedWords: [],
+                correctCount: 0,
+                isGameActive: false,
+                totalTimeRemaining: 300,
+                currentWord: '',
+                timer: null
+            };
+            
+            clearInterval(gameState.timer);
+            
+            // 重新打乱题库
+            shuffleArray(wordBank);
+            
+            // 重置界面
+            elements.wordDisplay.textContent = '生物知识大全';
+            elements.timer.textContent = '准备开始';
+            elements.currentRound.textContent = '0';
+            elements.timeLeft.textContent = '5:00';
+            elements.correctCount.textContent = '0';
+            
+            // 显示/隐藏按钮
+            elements.startBtn.classList.remove('hidden');
+            elements.correctBtn.classList.add('hidden');
+            elements.skipBtn.classList.add('hidden');
+            elements.gameOver.classList.add('hidden');
+            elements.gameArea.classList.remove('hidden');
+            
+            elements.timer.classList.remove('warning');
+        }
+
+        // 创建庆祝动画
+        function createConfetti() {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7'];
+            
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDelay = Math.random() * 3 + 's';
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(confetti);
+                    }, 3000);
+                }, i * 100);
+            }
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            if (gameState.isGameActive) {
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    skipQuestion();
+                } else if (e.code === 'Enter') {
+                    e.preventDefault();
+                    correctAnswer();
+                }
+            }
+        });
+
+        // 初始化
+        initGame();
+    </script>
+</body>
+</html>
