@@ -1218,7 +1218,9 @@
             isSpinning = true;
             const circle = document.getElementById('pickerCircle');
             const pickBtn = document.getElementById('pickBtn');
-            const displayStudents = availableStudents;
+            // === 随机性改进 ===
+            // 1. 随机打乱学生列表，避免数组顺序影响结果
+            const displayStudents = [...availableStudents].sort(() => Math.random() - 0.5);
             
             circle.classList.add('spinning');
             pickBtn.textContent = '正在选择...';
@@ -1228,11 +1230,13 @@
             const totalDuration = 4000; // 总时长4秒
             const startTime = Date.now();
             
-            // 物理参数 - 模拟真实滚轮的物理特性
-            let velocity = 30; // 初始速度（模拟手拨动的力度）
-            const friction = 0.985; // 摩擦系数（更真实的减速）
-            const minVelocity = 0.3; // 最小速度，低于此值进入停止阶段
-            let scrollOffset = 0; // 滚动偏移量
+            // 物理参数 - 模拟真实滚轮的物理特性（增加随机性）
+            // 2. 随机化物理参数，让每次滚动都不同
+            let velocity = 25 + Math.random() * 15; // 初始速度随机化：25-40
+            const friction = 0.980 + Math.random() * 0.015; // 摩擦系数随机化：0.980-0.995
+            const minVelocity = 0.2 + Math.random() * 0.2; // 最小速度随机化：0.2-0.4
+            // 3. 随机起始位置，避免总是从第一个学生开始
+            let scrollOffset = Math.random() * displayStudents.length;
             let isFinishing = false; // 是否进入最终停止阶段
             let frameCount = 0; // 帧计数器，用于创建更自然的效果
             
@@ -1292,7 +1296,9 @@
                     }
                 } else {
                     // 正常的物理滚动 - 平滑连续
-                    scrollOffset += velocity * 0.08; // 稍微调整滚动速度
+                    // 4. 滚动过程中的随机扰动，增加不可预测性
+                    const randomNoise = (Math.random() - 0.5) * 0.02; // 添加小幅随机扰动
+                    scrollOffset += velocity * (0.08 + randomNoise);
                 }
                 
                 // 计算当前显示的三个学生（仅使用未点名名单）
@@ -1332,19 +1338,27 @@
             physicsScrollAnimation();
             
             function finishSelection() {
-                // 最终选择：使用当前显示的中心学生作为结果
-                // 这样确保了卡顿效果结束时显示的就是最终结果
-                const centerNameEl = document.getElementById('centerName');
-                const currentDisplayedName = centerNameEl.textContent;
-                
-                // 确保选中的学生在可用列表中
+                // 最终选择：增加随机保障机制
                 let selectedStudent;
-                if (availableStudents.includes(currentDisplayedName)) {
-                    selectedStudent = currentDisplayedName;
-                } else {
-                    // 如果当前显示的学生已被点名，则随机选择一个可用的
+                
+                // 5. 最终随机保障：20%的概率直接随机选择，确保绝对公平
+                if (Math.random() < 0.2) {
+                    // 直接随机选择，确保完全的随机性
                     const finalIndex = Math.floor(Math.random() * availableStudents.length);
                     selectedStudent = availableStudents[finalIndex];
+                } else {
+                    // 使用当前显示的中心学生作为结果
+                    const centerNameEl = document.getElementById('centerName');
+                    const currentDisplayedName = centerNameEl.textContent;
+                    
+                    // 确保选中的学生在可用列表中
+                    if (availableStudents.includes(currentDisplayedName)) {
+                        selectedStudent = currentDisplayedName;
+                    } else {
+                        // 如果当前显示的学生已被点名，则随机选择一个可用的
+                        const finalIndex = Math.floor(Math.random() * availableStudents.length);
+                        selectedStudent = availableStudents[finalIndex];
+                    }
                 }
                 
                 circle.classList.remove('spinning');
